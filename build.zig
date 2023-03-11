@@ -18,12 +18,13 @@ pub fn addAssetsOption(b: *std.build.Builder, exe:anytype) !void {
         try files.append(b.dupe(file.name));
     }
     options.addOption([]const []const u8, "files", files.items);
+    exe.step.dependOn(&options.step);
 
-    var pkg = std.build.Pkg{
-        .name = "assets",
-        .source = options.getSource(),
-    };
-    exe.addPackage(pkg);
+    const assets = b.createModule(.{
+        .source_file = options.getSource(),
+        .dependencies = &.{},
+    });
+    exe.addModule("assets", assets);
 }
 
 
