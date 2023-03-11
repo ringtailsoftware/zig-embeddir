@@ -8,15 +8,17 @@ Zig has `@embedFile` (https://ziglang.org/documentation/master/#embedFile) which
 
 # How does it work?
 
-In `build.zig`, we add a custom function `addAssetsOption()`. This opens the `assets` directory, lists files and passes the list to the main program in a package called `assets` in a field called `files`.
+In `build.zig`, we add a custom function `addAssetsOption()`. This opens the `assets` directory, lists files and passes the list to the main program in a module called `assets` in a field called `files`.
 
     ...
-    options.addOption([]const []const u8, "files", files.items);
+        options.addOption([]const []const u8, "files", files.items);
+        exe.step.dependOn(&options.step);
 
-    var pkg = std.build.Pkg{
-        .name = "assets",
-        .source = options.getSource(),
-    };
+        const assets = b.createModule(.{
+            .source_file = options.getSource(),
+            .dependencies = &.{},
+        });
+        exe.addModule("assets", assets);
     ...
 
 In `src/main`, we build a `ComptimeStringMap` using `assets.files` as the keys and the result of `@embedFile()` on each key as the value.
