@@ -7,11 +7,11 @@ const EmbeddedAsset = struct {
     []const u8 = undefined,
 };
 
-// declare a ComptimeStringMap and fill it with our filenames and data
-const embeddedFilesMap = std.ComptimeStringMap([]const u8, genMap());
+// declare a StaticStringMap and fill it with our filenames and data
+const embeddedFilesMap = std.StaticStringMap([]const u8).initComptime(genMap());
 
 fn genMap() [assets.files.len]EmbeddedAsset {
-    var embassets: [assets.files.len]EmbeddedAsset = .{} ** assets.files.len;
+    var embassets: [assets.files.len]EmbeddedAsset = undefined;
     comptime var i = 0;
     inline for (assets.files) |file| {
         embassets[i][0] = file;

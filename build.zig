@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn addAssetsOption(b: *std.build.Builder, exe:anytype) !void {
+pub fn addAssetsOption(b: *std.Build, exe:anytype, target:anytype, optimize:anytype) !void {
     var options = b.addOptions();
 
     var files = std.ArrayList([]const u8).init(b.allocator);
@@ -9,10 +9,10 @@ pub fn addAssetsOption(b: *std.build.Builder, exe:anytype) !void {
     var buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
     const path = try std.fs.cwd().realpath("src/assets", buf[0..]);
 
-    var dir = try std.fs.openIterableDirAbsolute(path, .{});
+    var dir = try std.fs.openDirAbsolute(path, .{});
     var it = dir.iterate();
     while (try it.next()) |file| {
-        if (file.kind != .File) {
+        if (file.kind != .file) {
             continue;
         }
         try files.append(b.dupe(file.name));
@@ -20,11 +20,13 @@ pub fn addAssetsOption(b: *std.build.Builder, exe:anytype) !void {
     options.addOption([]const []const u8, "files", files.items);
     exe.step.dependOn(&options.step);
 
-    const assets = b.createModule(.{
-        .source_file = options.getSource(),
-        .dependencies = &.{},
+    const assets = b.addModule("assets", .{
+        .root_source_file = options.getSource(),
+        .target = target,
+        .optimize = optimize,
     });
-    exe.addModule("assets", assets);
+
+    exe.root_module.addImport("assets", assets);
 }
 
 
@@ -47,24 +49,25 @@ pub fn build(b: *std.Build) void {
         .name = "embdir",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    // This declares intent for the executable to be installed into the
-    // standard location when the user invokes the "install" step (the default
-    // step when running `zig build`).
-    exe.install();
-
-    addAssetsOption(b, exe) catch |err| {
+    addAssetsOption(b, exe, target, optimize) catch |err| {
         std.log.err("Problem adding assets: {!}", .{err});
     };
 
-    // This *creates* a RunStep in the build graph, to be executed when another
+    // This declares intent for the executable to be installed into the
+    // standard location when the user invokes the "install" step (the default
+    // step when running `zig build`).
+    b.installArtifact(exe);
+
+
+    // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
 
     // By making the run step depend on the install step, it will be run from the
     // installation directory rather than directly from within the cache directory.
@@ -78,11 +81,14 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
+    run_cmd.step.dependOn(b.getInstallStep());
+
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
     // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
 }
 
 
