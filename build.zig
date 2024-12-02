@@ -9,7 +9,7 @@ pub fn addAssetsOption(b: *std.Build, exe:anytype, target:anytype, optimize:anyt
     var buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
     const path = try std.fs.cwd().realpath("src/assets", buf[0..]);
 
-    var dir = try std.fs.openDirAbsolute(path, .{});
+    var dir = try std.fs.openDirAbsolute(path, .{.iterate=true});
     var it = dir.iterate();
     while (try it.next()) |file| {
         if (file.kind != .file) {
