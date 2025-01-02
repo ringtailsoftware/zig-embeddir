@@ -6,7 +6,7 @@ pub fn addAssetsOption(b: *std.Build, exe:anytype, target:anytype, optimize:anyt
     var files = std.ArrayList([]const u8).init(b.allocator);
     defer files.deinit();
 
-    var buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+    var buf: [std.fs.max_path_bytes]u8 = undefined;
     const path = try std.fs.cwd().realpath("src/assets", buf[0..]);
 
     var dir = try std.fs.openDirAbsolute(path, .{.iterate=true});
@@ -21,7 +21,7 @@ pub fn addAssetsOption(b: *std.Build, exe:anytype, target:anytype, optimize:anyt
     exe.step.dependOn(&options.step);
 
     const assets = b.addModule("assets", .{
-        .root_source_file = options.getSource(),
+        .root_source_file = options.getOutput(),
         .target = target,
         .optimize = optimize,
     });

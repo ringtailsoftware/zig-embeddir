@@ -3,8 +3,8 @@ const assets = @import("assets");
 
 // kv pair type used to fill ComptimeStringMap
 const EmbeddedAsset = struct {
-    []const u8 = undefined,
-    []const u8 = undefined,
+    []const u8,
+    []const u8,
 };
 
 // declare a StaticStringMap and fill it with our filenames and data
