@@ -1,6 +1,6 @@
 # embeddir
 
-An example of using the zig build system to aid in embeddeding multiple files in an executable.
+An example of using the zig build system to aid in embedding multiple files in an executable.
 
 Zig has `@embedFile` (https://ziglang.org/documentation/master/#embedFile) which embeds the contents of a file in the executable at compile time. In some situations, it's useful to embed all files from a directory without hardcoding their names into the source code.
 
