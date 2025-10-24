@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn addAssetsOption(b: *std.Build, exe:anytype, target:anytype, optimize:anytype) !void {
     var options = b.addOptions();
 
-    var files = std.ArrayList([]const u8).init(b.allocator);
+    var files = std.array_list.Managed([]const u8).init(b.allocator);
     defer files.deinit();
 
     var buf: [std.fs.max_path_bytes]u8 = undefined;
@@ -49,13 +49,15 @@ pub fn build(b: *std.Build) void {
         .name = "embdir",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     addAssetsOption(b, exe, target, optimize) catch |err| {
-        std.log.err("Problem adding assets: {!}", .{err});
+        std.log.err("Problem adding assets: {any}", .{err});
     };
 
     // This declares intent for the executable to be installed into the
